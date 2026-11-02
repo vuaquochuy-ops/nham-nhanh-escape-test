@@ -123,7 +123,7 @@ h1{margin:0;font-size:34px;line-height:1.1;font-weight:800;letter-spacing:-.02em
       <div class="bar"><i id="goalBar" style="background:var(--ink)"></i></div>
     </div>
     <div class="actions">
-      <button class="save-chip" id="chip" hidden>🔒 Lưu kỷ lục: mở bằng Safari</button>
+      <button class="save-chip" id="chip" hidden>🔒 Chơi trên Safari để giữ kỷ lục</button>
       <button class="btn" id="again">Chơi lại</button>
     </div>
   </section>
@@ -136,7 +136,7 @@ h1{margin:0;font-size:34px;line-height:1.1;font-weight:800;letter-spacing:-.02em
 </div>
 <div class="sheet" id="sheet" role="dialog" aria-modal="true" aria-labelledby="sheetTitle" hidden>
   <div class="panel">
-    <h2 id="sheetTitle">Giữ kỷ lục <mark class="num" id="sheetPb">0,0s</mark> của bạn</h2>
+    <h2 id="sheetTitle">Chơi trên Safari để giữ kỷ lục <mark class="num" id="sheetPb">0,0s</mark></h2>
     <div class="why">
       <div><span>🔒</span><p style="margin:0"><b>Lưu kỷ lục và bậc.</b> Trong Threads, thoát ra là có thể mất hết. Mở bằng Safari, lần sau mở lại là thấy ngay.</p></div>
       <div><span>⚡</span><p style="margin:0"><b>Chơi mượt hơn.</b> Toàn màn hình, phím bấm nhạy hơn, không bị Threads chen ngang.</p></div>
@@ -173,7 +173,10 @@ h1{margin:0;font-size:34px;line-height:1.1;font-weight:800;letter-spacing:-.02em
     history.replaceState(null, '', location.pathname);
   }
   var games = parseInt(store('nn-proto-games') || '0', 10) || 0;
-  var dismissed = false;
+  // Mỗi lần mở trong app: bảng nhắc hiện sau ván đầu. Đã bấm "Để sau" ở 2 lần mở trước thì chỉ còn nút vàng.
+  var MAX_SHEET = 2;
+  var dismissCount = parseInt(store('nn-proto-dismiss') || '0', 10) || 0;
+  var dismissed = dismissCount >= MAX_SHEET;
   $('nq').textContent = N;
   function showStart(){ $('pbStart').textContent = pb ? fmt(pb*1000) : 'chưa có'; show('sStart'); }
   function show(id){ ['sStart','sGame','sResult'].forEach(function(s){ $(s).hidden = s !== id; }); }
@@ -250,7 +253,10 @@ h1{margin:0;font-size:34px;line-height:1.1;font-weight:800;letter-spacing:-.02em
     $('sheet').classList.remove('on'); $('arrow').hidden = true;
     setTimeout(function(){ $('sheet').hidden = true; }, 250);
   }
-  $('later').onclick = function(){ dismissed = true; closeSheet(); $('chip').hidden = false; };
+  $('later').onclick = function(){
+    if (!dismissed) { dismissCount++; store('nn-proto-dismiss', String(dismissCount)); }
+    dismissed = true; closeSheet(); $('chip').hidden = false;
+  };
   $('chip').onclick = openSheet;
   $('copy').onclick = function(){
     var u = location.origin + location.pathname + '?pb=' + pb;
