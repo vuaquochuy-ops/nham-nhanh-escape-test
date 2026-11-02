@@ -1,0 +1,265 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no">
+<meta name="robots" content="noindex">
+<title>Nhẩm Nhanh · Prototype lưu kỷ lục</title>
+<style>
+/* Bố cục: một cột điện thoại trên giấy ô li (theo game/src/theme.ts); lớp nhắc Safari trượt lên từ đáy sau ván đầu */
+:root{
+  --paper:#EEF2F7; --grid:#DCE4EE; --grid-major:#C6D3E3; --ink:#1C2A4A; --ink-soft:#5B6B8C;
+  --red:#D6362F; --hl:#FFE45C; --tick:#1E8C6E; --key:#FFFFFF; --key-down:#DCE4EE; --card:#FFFFFF;
+  --f:-apple-system,BlinkMacSystemFont,"SF Pro Rounded","Segoe UI",Roboto,sans-serif;
+  color-scheme:light;
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;height:100%}
+body{background:var(--paper);color:var(--ink);font-family:var(--f);
+  background-image:linear-gradient(var(--grid) 1px,transparent 1px),linear-gradient(90deg,var(--grid) 1px,transparent 1px);background-size:24px 24px;
+  -webkit-user-select:none;user-select:none;overscroll-behavior:none}
+.app{height:100%;max-width:480px;margin:0 auto;display:flex;flex-direction:column;
+  padding:max(14px,env(safe-area-inset-top)) max(16px,env(safe-area-inset-right)) max(14px,env(safe-area-inset-bottom)) max(16px,env(safe-area-inset-left))}
+.screen{flex:1;display:flex;flex-direction:column;gap:16px;min-height:0}
+[hidden]{display:none!important}
+.num{font-variant-numeric:tabular-nums}
+.eyebrow{font-size:12px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--ink-soft)}
+h1{margin:0;font-size:34px;line-height:1.1;font-weight:800;letter-spacing:-.02em}
+.btn{appearance:none;border:0;border-radius:14px;padding:16px;font:700 18px var(--f);background:var(--ink);color:#fff;width:100%;cursor:pointer;text-align:center}
+.btn:active{transform:translateY(1px)}
+.btn.ghost{background:transparent;color:var(--ink);border:2px solid var(--ink)}
+.btn.soft{background:transparent;color:var(--ink-soft);font-weight:600;font-size:16px;padding:10px}
+.btn:focus-visible{outline:3px solid var(--hl);outline-offset:2px}
+.card{background:var(--card);border:1.5px solid var(--grid-major);border-radius:16px;padding:16px;display:flex;flex-direction:column;gap:8px}
+.banner{background:#E4F4EE;border:1.5px solid var(--tick);color:var(--tick);border-radius:12px;padding:12px 14px;font-weight:700}
+/* start */
+.start{justify-content:center}
+.pb{display:flex;justify-content:space-between;align-items:baseline}
+.pb b{font-size:28px}
+/* game */
+.hud{display:flex;justify-content:space-between;align-items:center;font-weight:700}
+.timer{font-size:22px}
+.bar{height:8px;background:var(--grid-major);border-radius:4px;overflow:hidden}
+.bar i{display:block;height:100%;background:var(--tick);width:0;transition:width .15s}
+.q{flex:1;display:flex;flex-direction:column;justify-content:center;align-items:center;gap:10px;min-height:120px}
+.expr{font-size:clamp(40px,12vw,56px);font-weight:800}
+.ans{min-width:120px;min-height:64px;border-bottom:3px solid var(--ink);font-size:44px;font-weight:800;text-align:center;padding:0 8px}
+.ans.bad{color:var(--red);border-color:var(--red);animation:shake .25s}
+.ans.ok{background:var(--hl)}
+@keyframes shake{25%{transform:translateX(-6px)}75%{transform:translateX(6px)}}
+.pen{color:var(--red);font-weight:700;min-height:22px}
+.pad{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.pad button{appearance:none;border:1.5px solid var(--grid-major);background:var(--key);border-radius:12px;height:62px;font:700 26px var(--f);color:var(--ink);touch-action:manipulation}
+.pad button:active{background:var(--key-down)}
+.pad .fn{font-size:16px;color:var(--ink-soft)}
+/* result */
+.result{justify-content:center;text-align:center;align-items:center}
+.big{font-size:64px;font-weight:800;line-height:1}
+.stamp{display:inline-block;border:3px solid var(--red);color:var(--red);border-radius:8px;padding:4px 12px;font-weight:800;letter-spacing:.06em;transform:rotate(-6deg)}
+.meta{color:var(--ink-soft)}
+.save-chip{display:flex;gap:8px;align-items:center;justify-content:center;background:var(--hl);border-radius:999px;padding:10px 14px;font-weight:700;border:0;font:700 15px var(--f);color:var(--ink);width:100%}
+.actions{display:flex;flex-direction:column;gap:10px;width:100%}
+/* sheet */
+.sheet{position:fixed;inset:0;z-index:20;background:rgba(18,26,46,.55);display:flex;flex-direction:column;justify-content:flex-end;opacity:0;transition:opacity .25s}
+.sheet.on{opacity:1}
+.sheet .panel{background:var(--card);border-radius:22px 22px 0 0;padding:22px max(18px,env(safe-area-inset-right)) max(18px,env(safe-area-inset-bottom)) max(18px,env(safe-area-inset-left));
+  display:flex;flex-direction:column;gap:14px;max-width:480px;width:100%;margin:0 auto;transform:translateY(40px);transition:transform .3s cubic-bezier(.2,.8,.2,1)}
+.sheet.on .panel{transform:none}
+.sheet h2{margin:0;font-size:23px;line-height:1.2}
+.sheet h2 mark{background:var(--hl);color:var(--ink);padding:0 4px;border-radius:4px}
+.why{display:grid;gap:10px}
+.why div{display:grid;grid-template-columns:28px 1fr;gap:10px;align-items:start;font-size:16px;line-height:1.35}
+.why span{font-size:20px;line-height:1}
+.steps{display:flex;gap:10px}
+.step{flex:1;border:1.5px dashed var(--grid-major);border-radius:12px;padding:10px;font-size:14px;line-height:1.3;display:flex;flex-direction:column;gap:4px}
+.step b{font-size:13px;color:var(--ink-soft)}
+.kbd{display:inline-flex;align-items:center;justify-content:center;min-width:30px;height:24px;border-radius:12px;background:var(--ink);color:#fff;font-weight:800;padding:0 6px}
+.arrow{position:fixed;z-index:21;top:calc(env(safe-area-inset-top,0px) + 4px);right:max(14px,env(safe-area-inset-right));color:#fff;display:flex;flex-direction:column;align-items:flex-end;gap:2px;font-weight:800;font-size:15px;text-shadow:0 1px 3px rgba(0,0,0,.4);pointer-events:none}
+.arrow svg{width:58px;height:58px;animation:nudge 1.1s ease-in-out infinite}
+@keyframes nudge{50%{transform:translate(4px,-7px)}}
+@media (prefers-reduced-motion:reduce){.arrow svg,.ans.bad{animation:none}.sheet,.sheet .panel{transition:none}}
+.note{position:fixed;left:50%;bottom:8px;transform:translateX(-50%);font-size:11px;color:var(--ink-soft);background:rgba(255,255,255,.8);padding:2px 8px;border-radius:8px;z-index:5}
+.toast{position:fixed;left:50%;top:calc(env(safe-area-inset-top,0px) + 12px);transform:translateX(-50%);background:var(--ink);color:#fff;padding:10px 14px;border-radius:12px;font-weight:700;z-index:30;max-width:90%;text-align:center}
+</style>
+</head>
+<body>
+<div class="app">
+
+  <!-- START -->
+  <section class="screen start" id="sStart">
+    <div class="banner" id="moved" hidden></div>
+    <div class="eyebrow">Nước Rút · bậc 1</div>
+    <h1>Trả lời đúng <span class="num" id="nq">10</span> câu nhanh nhất có thể</h1>
+    <p class="meta" style="margin:0">Sai cộng 2 giây. Bỏ qua cộng 3 giây.</p>
+    <div class="card pb"><span class="meta">Kỷ lục của bạn</span><b class="num" id="pbStart">–</b></div>
+    <button class="btn" id="go">Bắt đầu</button>
+  </section>
+
+  <!-- GAME -->
+  <section class="screen" id="sGame" hidden>
+    <div class="hud"><span class="num" id="count">0/10</span><span class="timer num" id="timer">0,0s</span></div>
+    <div class="bar"><i id="prog"></i></div>
+    <div class="q">
+      <div class="expr num" id="expr">7 + 8</div>
+      <div class="ans num" id="ans"></div>
+      <div class="pen" id="pen"></div>
+    </div>
+    <div class="pad" id="pad">
+      <button>7</button><button>8</button><button>9</button>
+      <button>4</button><button>5</button><button>6</button>
+      <button>1</button><button>2</button><button>3</button>
+      <button class="fn" data-k="skip">Bỏ</button><button>0</button><button class="fn" data-k="del">⌫</button>
+    </div>
+  </section>
+
+  <!-- RESULT -->
+  <section class="screen result" id="sResult" hidden>
+    <span class="stamp" id="stamp">KỶ LỤC MỚI</span>
+    <div class="big num" id="rTime">0,0s</div>
+    <div class="meta" id="rMeta"></div>
+    <div class="card" style="width:100%;text-align:left">
+      <span class="meta" id="rGoal"></span>
+      <div class="bar"><i id="goalBar" style="background:var(--ink)"></i></div>
+    </div>
+    <div class="actions">
+      <button class="save-chip" id="chip" hidden>🔒 Lưu kỷ lục: mở bằng Safari</button>
+      <button class="btn" id="again">Chơi lại</button>
+    </div>
+  </section>
+</div>
+
+<!-- SAFARI SHEET -->
+<div class="arrow" id="arrow" hidden aria-hidden="true">
+  <svg viewBox="0 0 64 64" fill="none" stroke="#fff" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 58 C 18 34, 32 20, 52 12"/><path d="M38 9 L52 12 L48 26"/></svg>
+  <span>Bấm ⋯</span>
+</div>
+<div class="sheet" id="sheet" role="dialog" aria-modal="true" aria-labelledby="sheetTitle" hidden>
+  <div class="panel">
+    <h2 id="sheetTitle">Giữ kỷ lục <mark class="num" id="sheetPb">0,0s</mark> của bạn</h2>
+    <div class="why">
+      <div><span>🔒</span><p style="margin:0"><b>Lưu kỷ lục và bậc.</b> Trong Threads, thoát ra là có thể mất hết. Mở bằng Safari, lần sau mở lại là thấy ngay.</p></div>
+      <div><span>⚡</span><p style="margin:0"><b>Chơi mượt hơn.</b> Toàn màn hình, phím bấm nhạy hơn, không bị Threads chen ngang.</p></div>
+    </div>
+    <div class="steps">
+      <div class="step"><b>Bước 1</b>Bấm <span class="kbd">⋯</span> góc trên bên phải</div>
+      <div class="step"><b>Bước 2</b>Chọn <b style="color:var(--ink);font-size:14px">Mở trong trình duyệt</b></div>
+    </div>
+    <button class="btn ghost" id="copy">Không thấy nút? Sao chép link</button>
+    <button class="btn soft" id="later">Để sau, chơi tiếp ở đây</button>
+  </div>
+</div>
+<div class="toast" id="toast" hidden></div>
+<div class="note">Prototype · không lưu lên máy chủ</div>
+
+<script>
+(function(){
+  var N = 10, PENALTY_WRONG = 2000, PENALTY_SKIP = 3000, GOAL = 22;   // bản rút gọn 10 câu; game thật 20 câu, mốc 45s
+  var ua = navigator.userAgent || '', q = new URLSearchParams(location.search);
+  var isIOS = /iPhone|iPad|iPod/.test(ua) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+  var inApp = /Barcelona|Instagram|FBAN|FBAV|FB_IAB|Zalo/i.test(ua) || (isIOS && !/Safari\//.test(ua)) || (/Android/.test(ua) && /; wv\)/.test(ua));
+  if (q.get('preview') === 'inapp') inApp = true;   // xem thử trên máy tính
+  var $ = function(id){ return document.getElementById(id); };
+  var fmt = function(ms){ return (ms/1000).toFixed(1).replace('.', ',') + 's'; };
+  function store(k, v){ try { if (v === undefined) return localStorage.getItem(k); localStorage.setItem(k, v); } catch(e){ return null; } }
+  function toast(t){ var e=$('toast'); e.textContent=t; e.hidden=false; clearTimeout(toast.t); toast.t=setTimeout(function(){e.hidden=true;},2600); }
+
+  // Kỷ lục mang theo từ Threads qua URL (?pb=)
+  var pb = parseFloat(store('nn-proto-pb')) || null, carried = parseFloat(q.get('pb'));
+  if (!inApp && carried && (!pb || carried < pb)) {
+    pb = carried; store('nn-proto-pb', String(pb));
+    $('moved').textContent = '✓ Đã lưu kỷ lục ' + fmt(pb) + ' sang Safari. Mở lại tab này là chơi tiếp.';
+    $('moved').hidden = false;
+    history.replaceState(null, '', location.pathname);
+  }
+  var games = parseInt(store('nn-proto-games') || '0', 10) || 0;
+  var dismissed = false;
+  $('nq').textContent = N;
+  function showStart(){ $('pbStart').textContent = pb ? fmt(pb) : 'chưa có'; show('sStart'); }
+  function show(id){ ['sStart','sGame','sResult'].forEach(function(s){ $(s).hidden = s !== id; }); }
+
+  // ván chơi
+  var qs, i, typed, t0, pen, raf, done;
+  function make(){
+    var r = Math.random(), a, b;
+    if (r < .4){ a = 6 + (Math.random()*44|0); b = 3 + (Math.random()*9|0); return [a+' + '+b, a+b]; }
+    if (r < .7){ a = 2 + (Math.random()*8|0); b = 2 + (Math.random()*8|0); return [a+' × '+b, a*b]; }
+    a = 12 + (Math.random()*40|0); b = 2 + (Math.random()*9|0); return [a+' − '+b, a-b];
+  }
+  function start(){
+    qs = []; for (var k=0;k<N;k++) qs.push(make());
+    i = 0; typed = ''; pen = 0; done = false; t0 = performance.now();
+    show('sGame'); render(); tick();
+  }
+  function now(){ return performance.now() - t0 + pen; }
+  function tick(){ if (done) return; $('timer').textContent = fmt(now()); raf = requestAnimationFrame(tick); }
+  function render(){
+    $('expr').textContent = qs[i][0]; $('ans').textContent = typed; $('count').textContent = i + '/' + N;
+    $('prog').style.width = (100*i/N) + '%';
+  }
+  function next(){ i++; typed=''; if (i >= N) return finish(); render(); }
+  function press(k){
+    if (done) return;
+    var ans = $('ans');
+    if (k === 'del'){ typed = typed.slice(0,-1); ans.textContent = typed; return; }
+    if (k === 'skip'){ pen += PENALTY_SKIP; flash('+3s bỏ qua'); return next(); }
+    if (typed.length >= 3) return;
+    typed += k; ans.textContent = typed;
+    var target = String(qs[i][1]);
+    if (typed === target){ ans.classList.add('ok'); setTimeout(function(){ ans.classList.remove('ok'); }, 120); next(); }
+    else if (typed.length >= target.length){
+      pen += PENALTY_WRONG; flash('+2s sai'); ans.classList.remove('bad'); void ans.offsetWidth; ans.classList.add('bad');
+      setTimeout(function(){ typed=''; ans.textContent=''; ans.classList.remove('bad'); }, 260);
+    }
+  }
+  function flash(t){ $('pen').textContent = t; clearTimeout(flash.t); flash.t = setTimeout(function(){ $('pen').textContent=''; }, 700); }
+  $('pad').addEventListener('pointerdown', function(e){
+    var b = e.target.closest('button'); if (!b) return; e.preventDefault();
+    press(b.dataset.k || b.textContent.trim());
+  });
+  document.addEventListener('keydown', function(e){
+    if ($('sGame').hidden) return;
+    if (/^\d$/.test(e.key)) press(e.key); else if (e.key === 'Backspace') press('del');
+  });
+
+  function finish(){
+    done = true; cancelAnimationFrame(raf);
+    var ms = now(), sec = ms/1000, isPb = !pb || sec < pb;
+    if (isPb){ pb = Math.round(sec*10)/10; store('nn-proto-pb', String(pb)); }
+    games++; store('nn-proto-games', String(games));
+    $('rTime').textContent = fmt(ms);
+    $('stamp').hidden = !isPb;
+    $('rMeta').textContent = isPb ? 'Bạn vừa lập kỷ lục mới' : 'Kỷ lục của bạn: ' + fmt(pb*1000);
+    var gap = sec - GOAL;
+    $('rGoal').textContent = gap > 0 ? 'Còn ' + gap.toFixed(1).replace('.', ',') + 's nữa là đạt mốc bậc 1 (' + GOAL + 's, bản rút gọn)' : 'Đạt mốc ' + GOAL + 's của bậc 1';
+    $('goalBar').style.width = Math.max(8, Math.min(100, 100*GOAL/sec)) + '%';
+    show('sResult');
+    // Mang kỷ lục theo URL: khi người chơi tự chọn "Mở trong trình duyệt", Safari nhận được
+    if (inApp) { try { history.replaceState(null, '', location.pathname + '?pb=' + pb); } catch(e){} }
+    $('chip').hidden = !(inApp && dismissed);
+    if (inApp && !dismissed) setTimeout(openSheet, 900);
+  }
+
+  // lớp nhắc Safari
+  function openSheet(){
+    $('sheetPb').textContent = fmt(pb*1000);
+    $('sheet').hidden = false; $('arrow').hidden = false;
+    requestAnimationFrame(function(){ $('sheet').classList.add('on'); });
+  }
+  function closeSheet(){
+    $('sheet').classList.remove('on'); $('arrow').hidden = true;
+    setTimeout(function(){ $('sheet').hidden = true; }, 250);
+  }
+  $('later').onclick = function(){ dismissed = true; closeSheet(); $('chip').hidden = false; };
+  $('chip').onclick = openSheet;
+  $('copy').onclick = function(){
+    var u = location.origin + location.pathname + '?pb=' + pb;
+    try { navigator.clipboard.writeText(u).then(function(){ toast('Đã chép link. Mở Safari và dán vào thanh địa chỉ.'); }, function(){ toast(u); }); }
+    catch(e){ toast(u); }
+  };
+  $('go').onclick = start;
+  $('again').onclick = start;
+  showStart();
+})();
+</script>
+</body>
+</html>
