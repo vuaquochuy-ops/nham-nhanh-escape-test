@@ -98,6 +98,14 @@ code{font:13px ui-monospace,Menlo,monospace;word-break:break-all}
     <p class="hint" id="actionHint">Bấm một lần rồi xem điều gì xảy ra: có hộp hỏi "Mở trong Safari?" không, Safari có mở đúng trang này không.</p>
   </section>
 
+  <section class="card">
+    <h2>Thử thêm · cho bản app sau này</h2>
+    <p class="hint">Kiểm tra Threads có cho trang web mở sang app khác hay App Store không. Nếu được, sau khi app Nhẩm Nhanh được duyệt có thể có nút "Mở trong app".</p>
+    <a class="btn ghost" id="btnScheme" href="zalo://">Mở app Zalo (link riêng của app)</a>
+    <a class="btn ghost" id="btnScheme2" href="instagram://">Mở app Instagram (link riêng của app)</a>
+    <a class="btn ghost" id="btnStore" href="https://apps.apple.com/vn/app/zalo/id579523206">Mở trang Zalo trên App Store</a>
+  </section>
+
   <section class="card fallback" id="fallback" hidden>
     <span class="big">Có vẻ chưa mở được</span>
     <p>Thử cách thủ công: bấm nút <b>⋯</b> (góc trên bên phải) rồi chọn <b>Mở trong trình duyệt / Open in Safari</b>.</p>
@@ -112,6 +120,10 @@ code{font:13px ui-monospace,Menlo,monospace;word-break:break-all}
       <label><input type="radio" name="r" id="r3" value="popup-failed">Hiện hộp hỏi nhưng không mở được</label>
       <label><input type="radio" name="r" id="r4" value="nothing">Không có gì xảy ra</label>
       <label><input type="radio" name="r" id="r5" value="error">Báo lỗi / trang trắng</label>
+    </fieldset>
+    <fieldset>
+      <legend>Nút "Thử thêm" (ghi chú tự do):</legend>
+      <input id="extra" type="text" placeholder="VD: Zalo mở được, Instagram không, App Store mở được" style="width:100%;padding:10px;border-radius:8px;border:1px solid var(--line);background:var(--bg);color:var(--ink);font:inherit">
     </fieldset>
     <textarea id="report" readonly aria-label="Kết quả để gửi lại"></textarea>
     <button id="btnReport" type="button" class="ghost">Sao chép kết quả</button>
@@ -209,10 +221,12 @@ code{font:13px ui-monospace,Menlo,monospace;word-break:break-all}
       'Kết quả: ' + (r ? r.parentNode.textContent.trim() : '(chưa chọn)'),
       'Mã chuyển: ' + token,
       'Lần mở ở đây: ' + visits,
+      'Thử thêm: ' + (document.getElementById('extra').value || '(trống)'),
       'UA: ' + ua
     ].join('\n');
   }
   Array.prototype.forEach.call(document.querySelectorAll('input[name=r]'), function(i){ i.onchange = update; });
+  document.getElementById('extra').oninput = update;
   document.getElementById('btnReport').onclick = function(){
     var b = this; update();
     try { navigator.clipboard.writeText(report.value).then(function(){ b.textContent = 'Đã sao chép kết quả'; }, function(){ report.select(); }); }
