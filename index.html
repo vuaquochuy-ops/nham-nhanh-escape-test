@@ -8,12 +8,12 @@
 <style>
 :root{
   --bg:#f6f8fb; --card:#ffffff; --ink:#18233a; --muted:#5b6780; --line:#d6deea;
-  --pen:#1f4fd1; --ok:#1f8a5b; --warn:#b4541a; --bad:#c2372a;
+  --pen:#1f4fd1; --on-pen:#ffffff; --ok:#1f8a5b; --warn:#b4541a; --bad:#c2372a;
   color-scheme:light;
 }
 @media (prefers-color-scheme:dark){:root{
   --bg:#10151e; --card:#171e2b; --ink:#e6ebf5; --muted:#9aa6bd; --line:#2a3345;
-  --pen:#7da2ff; --ok:#5fd19c; --warn:#ffad6b; --bad:#ff7a66; color-scheme:dark}}
+  --pen:#7da2ff; --on-pen:#0d1424; --ok:#5fd19c; --warn:#ffad6b; --bad:#ff7a66; color-scheme:dark}}
 *{box-sizing:border-box}
 html,body{margin:0}
 body{background:var(--bg);color:var(--ink);font:16px/1.5 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
@@ -31,7 +31,7 @@ p{margin:0}
 dl{display:grid;grid-template-columns:auto minmax(0,1fr);gap:4px 12px;margin:0;font-size:14px}
 dt{color:var(--muted)} dd{margin:0;font-weight:600;word-break:break-word}
 button,.btn{appearance:none;border:0;border-radius:10px;padding:14px 16px;font:600 17px/1.2 inherit;font-family:inherit;
-  background:var(--pen);color:#fff;text-align:center;text-decoration:none;display:block;width:100%;cursor:pointer}
+  background:var(--pen);color:var(--on-pen);text-align:center;text-decoration:none;display:block;width:100%;cursor:pointer}
 button.ghost,.btn.ghost{background:transparent;color:var(--pen);border:2px solid var(--pen)}
 button:focus-visible,.btn:focus-visible{outline:3px solid var(--warn);outline-offset:2px}
 .hint{font-size:13px;color:var(--muted)}
@@ -57,7 +57,9 @@ code{font:13px ui-monospace,Menlo,monospace;word-break:break-all}
       <dt>Đang mở trong</dt><dd id="where">–</dd>
       <dt>Game sẽ xếp vào</dt><dd id="group">–</dd>
       <dt>Mã chuyển</dt><dd id="token">–</dd>
+      <dt>Lần mở ở đây</dt><dd id="visits">–</dd>
     </dl>
+    <p class="hint">"Lần mở ở đây" đếm số lần trang được mở trong đúng trình duyệt này. Đóng trang, mở lại link từ Threads: nếu số tăng lên thì Threads có giữ dữ liệu (tiến độ game) giữa các lần mở.</p>
   </section>
 
   <section class="card" id="actions">
@@ -110,6 +112,16 @@ code{font:13px ui-monospace,Menlo,monospace;word-break:break-all}
   document.getElementById('group').textContent = group + (group === 'other' ? ' (trong app)' : '');
   document.getElementById('token').textContent = token + (cameFrom ? ' (nhận từ trình duyệt trong app)' : '');
 
+  var visits = 'không lưu được', firstAt = '';
+  try {
+    var n = (parseInt(localStorage.getItem('nn-escape-visits') || '0', 10) || 0) + 1;
+    localStorage.setItem('nn-escape-visits', String(n));
+    firstAt = localStorage.getItem('nn-escape-first') || '';
+    if (!firstAt) { firstAt = new Date().toLocaleString('vi-VN'); localStorage.setItem('nn-escape-first', firstAt); }
+    visits = n + ' (lần đầu: ' + firstAt + ')';
+  } catch (e) {}
+  document.getElementById('visits').textContent = visits;
+
   var card = document.getElementById('statusCard'), st = document.getElementById('statusText');
   if (cameFrom && !inApp) { card.classList.add('ok'); st.textContent = 'Đã mở ra ' + browserName + ' thành công'; }
   else if (inApp) { card.classList.add('in'); st.textContent = 'Bạn đang ở trong ' + browserName; }
@@ -157,6 +169,7 @@ code{font:13px ui-monospace,Menlo,monospace;word-break:break-all}
       'Cách đã thử: ' + (tried || q.get('auto') === '1' && 'tự động' || '(chưa bấm)'),
       'Kết quả: ' + (r ? r.parentNode.textContent.trim() : '(chưa chọn)'),
       'Mã chuyển: ' + token,
+      'Lần mở ở đây: ' + visits,
       'UA: ' + ua
     ].join('\n');
   }
