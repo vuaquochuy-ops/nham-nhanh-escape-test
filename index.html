@@ -1,0 +1,173 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="robots" content="noindex">
+<title>Thử mở bằng Safari · Nhẩm Nhanh</title>
+<style>
+:root{
+  --bg:#f6f8fb; --card:#ffffff; --ink:#18233a; --muted:#5b6780; --line:#d6deea;
+  --pen:#1f4fd1; --ok:#1f8a5b; --warn:#b4541a; --bad:#c2372a;
+  color-scheme:light;
+}
+@media (prefers-color-scheme:dark){:root{
+  --bg:#10151e; --card:#171e2b; --ink:#e6ebf5; --muted:#9aa6bd; --line:#2a3345;
+  --pen:#7da2ff; --ok:#5fd19c; --warn:#ffad6b; --bad:#ff7a66; color-scheme:dark}}
+*{box-sizing:border-box}
+html,body{margin:0}
+body{background:var(--bg);color:var(--ink);font:16px/1.5 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+  padding:max(20px,env(safe-area-inset-top)) max(16px,env(safe-area-inset-right)) max(28px,env(safe-area-inset-bottom)) max(16px,env(safe-area-inset-left))}
+main{max-width:520px;margin:0 auto;display:flex;flex-direction:column;gap:16px}
+h1{font-size:24px;margin:0;line-height:1.25}
+h2{font-size:15px;margin:0;text-transform:uppercase;letter-spacing:.06em;color:var(--muted)}
+p{margin:0}
+.card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:16px;display:flex;flex-direction:column;gap:10px}
+.status{border-width:2px}
+.status.in{border-color:var(--warn)}
+.status.ok{border-color:var(--ok)}
+.big{font-size:20px;font-weight:700}
+.status.in .big{color:var(--warn)} .status.ok .big{color:var(--ok)}
+dl{display:grid;grid-template-columns:auto minmax(0,1fr);gap:4px 12px;margin:0;font-size:14px}
+dt{color:var(--muted)} dd{margin:0;font-weight:600;word-break:break-word}
+button,.btn{appearance:none;border:0;border-radius:10px;padding:14px 16px;font:600 17px/1.2 inherit;font-family:inherit;
+  background:var(--pen);color:#fff;text-align:center;text-decoration:none;display:block;width:100%;cursor:pointer}
+button.ghost,.btn.ghost{background:transparent;color:var(--pen);border:2px solid var(--pen)}
+button:focus-visible,.btn:focus-visible{outline:3px solid var(--warn);outline-offset:2px}
+.hint{font-size:13px;color:var(--muted)}
+.fallback{border-color:var(--bad)}
+.fallback .big{color:var(--bad)}
+fieldset{border:0;padding:0;margin:0;display:flex;flex-direction:column;gap:8px}
+legend{font-weight:600;margin-bottom:6px}
+label{display:flex;gap:10px;align-items:flex-start;font-size:15px}
+input[type=radio]{margin-top:4px;width:18px;height:18px;flex:none}
+textarea{width:100%;min-height:120px;font:12px/1.4 ui-monospace,Menlo,monospace;background:var(--bg);color:var(--ink);border:1px solid var(--line);border-radius:8px;padding:8px}
+code{font:13px ui-monospace,Menlo,monospace;word-break:break-all}
+[hidden]{display:none!important}
+</style>
+</head>
+<body>
+<main>
+  <h1>Thử mở Nhẩm Nhanh bằng Safari</h1>
+
+  <section class="card status" id="statusCard">
+    <span class="big" id="statusText">Đang kiểm tra trình duyệt…</span>
+    <dl>
+      <dt>Thiết bị</dt><dd id="os">–</dd>
+      <dt>Đang mở trong</dt><dd id="where">–</dd>
+      <dt>Game sẽ xếp vào</dt><dd id="group">–</dd>
+      <dt>Mã chuyển</dt><dd id="token">–</dd>
+    </dl>
+  </section>
+
+  <section class="card" id="actions">
+    <h2>Bước 1 · Bấm nút</h2>
+    <button id="btnSafari" type="button">Mở bằng Safari</button>
+    <button id="btnChrome" type="button">Mở bằng Chrome</button>
+    <button id="btnCopy" type="button" class="ghost">Sao chép link</button>
+    <p class="hint" id="actionHint">Bấm một lần rồi xem điều gì xảy ra: có hộp hỏi "Mở trong Safari?" không, Safari có mở đúng trang này không.</p>
+  </section>
+
+  <section class="card fallback" id="fallback" hidden>
+    <span class="big">Có vẻ chưa mở được</span>
+    <p>Thử cách thủ công: bấm nút <b>⋯</b> (góc trên bên phải) rồi chọn <b>Mở trong trình duyệt / Open in Safari</b>.</p>
+  </section>
+
+  <section class="card">
+    <h2>Bước 2 · Ghi kết quả</h2>
+    <fieldset>
+      <legend>Sau khi bấm "Mở bằng Safari" (hoặc Chrome):</legend>
+      <label><input type="radio" name="r" id="r1" value="popup-opened">Hiện hộp hỏi, bấm Mở thì Safari/Chrome mở đúng trang</label>
+      <label><input type="radio" name="r" id="r2" value="direct-opened">Mở thẳng Safari/Chrome, không hỏi</label>
+      <label><input type="radio" name="r" id="r3" value="popup-failed">Hiện hộp hỏi nhưng không mở được</label>
+      <label><input type="radio" name="r" id="r4" value="nothing">Không có gì xảy ra</label>
+      <label><input type="radio" name="r" id="r5" value="error">Báo lỗi / trang trắng</label>
+    </fieldset>
+    <textarea id="report" readonly aria-label="Kết quả để gửi lại"></textarea>
+    <button id="btnReport" type="button" class="ghost">Sao chép kết quả</button>
+    <p class="hint">Dán kết quả này vào chat để tổng hợp. Trang không gửi dữ liệu đi đâu.</p>
+  </section>
+</main>
+
+<script>
+(function(){
+  var ua = navigator.userAgent || '';
+  var q = new URLSearchParams(location.search);
+  var isIOS = /iPhone|iPad|iPod/.test(ua) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+  var isAndroid = /Android/.test(ua);
+  var app = /Barcelona/i.test(ua) ? 'Threads' : /Instagram/.test(ua) ? 'Instagram' : /FBAN|FBAV|FB_IAB|FBIOS/.test(ua) ? 'Facebook/Messenger'
+    : /Zalo/i.test(ua) ? 'Zalo' : /musical_ly|BytedanceWebview|TikTok/i.test(ua) ? 'TikTok' : /Line\//.test(ua) ? 'LINE' : '';
+  var webview = (isIOS && !/Safari\//.test(ua)) || (isAndroid && /; wv\)/.test(ua));
+  var inApp = !!app || webview;
+  // Cùng quy tắc với browserGroup() trong game/src/account/track.ts
+  var group = /Edg\//.test(ua) ? 'edge' : /Firefox\//.test(ua) ? 'firefox' : /Chrome\/|CriOS\//.test(ua) ? 'chrome' : /Safari\//.test(ua) ? 'safari' : 'other';
+  var cameFrom = q.get('from') === 'inapp';
+  var token = q.get('t') || Math.random().toString(36).slice(2, 8).toUpperCase();
+  var browserName = inApp ? ('trình duyệt trong ' + (app || 'app') ) : /CriOS|Chrome\//.test(ua) ? 'Chrome' : /Safari\//.test(ua) ? 'Safari' : 'trình duyệt khác';
+
+  document.getElementById('os').textContent = isIOS ? 'iPhone/iPad' : isAndroid ? 'Android' : 'Máy tính / khác';
+  document.getElementById('where').textContent = browserName;
+  document.getElementById('group').textContent = group + (group === 'other' ? ' (trong app)' : '');
+  document.getElementById('token').textContent = token + (cameFrom ? ' (nhận từ trình duyệt trong app)' : '');
+
+  var card = document.getElementById('statusCard'), st = document.getElementById('statusText');
+  if (cameFrom && !inApp) { card.classList.add('ok'); st.textContent = 'Đã mở ra ' + browserName + ' thành công'; }
+  else if (inApp) { card.classList.add('in'); st.textContent = 'Bạn đang ở trong ' + browserName; }
+  else { st.textContent = 'Bạn đang ở ' + browserName + '. Mở link này từ Threads để thử.'; }
+
+  var target = location.host + location.pathname + '?from=inapp&t=' + encodeURIComponent(token);
+  var https = 'https://' + target;
+  var safariUrl = 'x-safari-https://' + target;
+  var chromeUrl = 'intent://' + target + '#Intent;scheme=https;package=com.android.chrome;S.browser_fallback_url=' + encodeURIComponent(https) + ';end';
+
+  document.getElementById('btnSafari').hidden = isAndroid;
+  document.getElementById('btnChrome').hidden = isIOS;
+  var tried = '';
+  function attempt(url, label){
+    tried = label; update();
+    var t0 = Date.now();
+    location.href = url;
+    setTimeout(function(){
+      // Nếu trang vẫn hiển thị sau 2s, coi như không thoát được
+      if (document.visibilityState === 'visible' && Date.now() - t0 < 4000) document.getElementById('fallback').hidden = false;
+    }, 2000);
+  }
+  document.getElementById('btnSafari').onclick = function(){ attempt(safariUrl, 'x-safari-https (bấm nút)'); };
+  document.getElementById('btnChrome').onclick = function(){ attempt(chromeUrl, 'intent Chrome (bấm nút)'); };
+  document.getElementById('btnCopy').onclick = function(){
+    var b = this;
+    function done(){ b.textContent = 'Đã sao chép link'; }
+    function manual(){ report.value = https; report.select(); b.textContent = 'Chọn link ở ô kết quả bên dưới'; }
+    try { navigator.clipboard.writeText(https).then(done, manual); } catch(e) { manual(); }
+  };
+
+  // ?auto=1: thử tự chuyển ngay khi vào trang, để so với bấm nút
+  if (q.get('auto') === '1' && inApp && !cameFrom) {
+    setTimeout(function(){ attempt(isAndroid ? chromeUrl : safariUrl, isAndroid ? 'intent Chrome (tự động)' : 'x-safari-https (tự động)'); }, 400);
+  }
+
+  var report = document.getElementById('report');
+  function update(){
+    var r = document.querySelector('input[name=r]:checked');
+    report.value = [
+      'Kết quả thử mở Safari · ' + new Date().toLocaleString('vi-VN'),
+      'Trang: ' + (cameFrom ? 'mở sau khi chuyển (from=inapp)' : 'mở lần đầu'),
+      'Thiết bị: ' + document.getElementById('os').textContent,
+      'Đang ở: ' + browserName + ' | nhóm game: ' + group,
+      'Cách đã thử: ' + (tried || q.get('auto') === '1' && 'tự động' || '(chưa bấm)'),
+      'Kết quả: ' + (r ? r.parentNode.textContent.trim() : '(chưa chọn)'),
+      'Mã chuyển: ' + token,
+      'UA: ' + ua
+    ].join('\n');
+  }
+  Array.prototype.forEach.call(document.querySelectorAll('input[name=r]'), function(i){ i.onchange = update; });
+  document.getElementById('btnReport').onclick = function(){
+    var b = this; update();
+    try { navigator.clipboard.writeText(report.value).then(function(){ b.textContent = 'Đã sao chép kết quả'; }, function(){ report.select(); }); }
+    catch(e){ report.select(); }
+  };
+  update();
+})();
+</script>
+</body>
+</html>
