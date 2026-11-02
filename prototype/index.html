@@ -123,7 +123,7 @@ h1{margin:0;font-size:34px;line-height:1.1;font-weight:800;letter-spacing:-.02em
       <div class="bar"><i id="goalBar" style="background:var(--ink)"></i></div>
     </div>
     <div class="actions">
-      <button class="save-chip" id="chip" hidden>🔒 Chơi trên Safari để giữ kỷ lục</button>
+      <button class="save-chip" id="chip" hidden>🔒 Chơi trên <span id="chipBr">Safari</span> để giữ kỷ lục</button>
       <button class="btn" id="again">Chơi lại</button>
     </div>
   </section>
@@ -132,18 +132,18 @@ h1{margin:0;font-size:34px;line-height:1.1;font-weight:800;letter-spacing:-.02em
 <!-- SAFARI SHEET -->
 <div class="arrow" id="arrow" hidden aria-hidden="true">
   <svg viewBox="0 0 64 64" fill="none" stroke="#fff" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 58 C 18 34, 32 20, 52 12"/><path d="M38 9 L52 12 L48 26"/></svg>
-  <span>Bấm ⋯</span>
+  <span>Bấm <span id="arrowKey">⋯</span></span>
 </div>
 <div class="sheet" id="sheet" role="dialog" aria-modal="true" aria-labelledby="sheetTitle" hidden>
   <div class="panel">
-    <h2 id="sheetTitle">Chơi trên Safari để giữ kỷ lục <mark class="num" id="sheetPb">0,0s</mark></h2>
+    <h2 id="sheetTitle">Chơi trên <span id="sheetBr">Safari</span> để giữ kỷ lục <mark class="num" id="sheetPb">0,0s</mark></h2>
     <div class="why">
-      <div><span>🔒</span><p style="margin:0"><b>Lưu kỷ lục và bậc.</b> Trong Threads, thoát ra là có thể mất hết. Mở bằng Safari, lần sau mở lại là thấy ngay.</p></div>
+      <div><span>🔒</span><p style="margin:0"><b>Lưu kỷ lục và bậc.</b> Trong Threads, thoát ra là có thể mất hết. Mở bằng <span id="whyBr">Safari</span>, lần sau mở lại là thấy ngay.</p></div>
       <div><span>⚡</span><p style="margin:0"><b>Chơi mượt hơn.</b> Toàn màn hình, phím bấm nhạy hơn, không bị Threads chen ngang.</p></div>
     </div>
     <div class="steps">
-      <div class="step"><b>Bước 1</b><span>Bấm <span class="kbd">⋯</span> ở góc trên bên phải</span></div>
-      <div class="step"><b>Bước 2</b><span>Chọn <strong>Mở trong trình duyệt</strong></span></div>
+      <div class="step"><b>Bước 1</b><span id="step1">Bấm <span class="kbd">⋯</span> ở góc trên bên phải</span></div>
+      <div class="step"><b>Bước 2</b><span id="step2">Chọn <strong>Mở trong trình duyệt</strong></span></div>
     </div>
     <button class="btn ghost" id="copy">Không thấy nút? Sao chép link</button>
     <button class="btn soft" id="later">Để sau, chơi tiếp ở đây</button>
@@ -157,9 +157,25 @@ h1{margin:0;font-size:34px;line-height:1.1;font-weight:800;letter-spacing:-.02em
   var N = 10, PENALTY_WRONG = 2000, PENALTY_SKIP = 3000, GOAL = 22;   // bản rút gọn 10 câu; game thật 20 câu, mốc 45s
   var ua = navigator.userAgent || '', q = new URLSearchParams(location.search);
   var isIOS = /iPhone|iPad|iPod/.test(ua) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
-  var inApp = /Barcelona|Instagram|FBAN|FBAV|FB_IAB|Zalo/i.test(ua) || (isIOS && !/Safari\//.test(ua)) || (/Android/.test(ua) && /; wv\)/.test(ua));
+  var isAndroid = /Android/.test(ua);
+  var inApp = /Barcelona|Instagram|FBAN|FBAV|FB_IAB|Zalo/i.test(ua) || (isIOS && !/Safari\//.test(ua)) || (isAndroid && /; wv\)/.test(ua));
   if (q.get('preview') === 'inapp') inApp = true;   // xem thử trên máy tính
+  if (q.get('preview') === 'android') { inApp = true; isAndroid = true; isIOS = false; }
+  var BR = isAndroid ? 'Chrome' : 'Safari';
   var $ = function(id){ return document.getElementById(id); };
+  // Giữ nguyên tham số sẵn có của link (mã link theo dõi, arrival…), chỉ thay các khóa của luồng chuyển trình duyệt
+  function withParams(extra){
+    var p = new URLSearchParams(location.search);
+    ['pb','from','ac','preview'].forEach(function(k){ p.delete(k); });
+    for (var k in extra) if (extra[k] != null) p.set(k, extra[k]);
+    var s = p.toString(); return location.pathname + (s ? '?' + s : '');
+  }
+  // Android trong app: tự chuyển sang Chrome ngay khi vào. ac=1 đánh dấu đã thử, tránh lặp khi Chrome không có
+  if (inApp && isAndroid && !q.get('ac') && q.get('preview') !== 'android') {
+    var dest = location.host + withParams({ from: 'inapp', pb: store('nn-proto-pb') });
+    var fallback = 'https://' + location.host + withParams({ ac: 1 });
+    location.href = 'intent://' + dest + '#Intent;scheme=https;package=com.android.chrome;S.browser_fallback_url=' + encodeURIComponent(fallback) + ';end';
+  }
   var fmt = function(ms){ return (ms/1000).toFixed(1).replace('.', ',') + 's'; };
   function store(k, v){ try { if (v === undefined) return localStorage.getItem(k); localStorage.setItem(k, v); } catch(e){ return null; } }
   function toast(t){ var e=$('toast'); e.textContent=t; e.hidden=false; clearTimeout(toast.t); toast.t=setTimeout(function(){e.hidden=true;},2600); }
@@ -168,10 +184,15 @@ h1{margin:0;font-size:34px;line-height:1.1;font-weight:800;letter-spacing:-.02em
   var pb = parseFloat(store('nn-proto-pb')) || null, carried = parseFloat(q.get('pb'));
   if (!inApp && carried && (!pb || carried < pb)) {
     pb = carried; store('nn-proto-pb', String(pb));
-    $('moved').textContent = '✓ Đã lưu kỷ lục ' + fmt(pb*1000) + ' sang Safari. Mở lại tab này là chơi tiếp.';
+    $('moved').textContent = '✓ Đã lưu kỷ lục ' + fmt(pb*1000) + ' sang ' + BR + '. Mở lại tab này là chơi tiếp.';
     $('moved').hidden = false;
-    history.replaceState(null, '', location.pathname);
   }
+  if (!inApp && (q.get('pb') || q.get('from'))) history.replaceState(null, '', withParams({}));
+  // Chữ trong bảng nhắc theo nền tảng
+  $('sheetBr').textContent = BR; $('whyBr').textContent = BR; $('chipBr').textContent = BR;
+  $('step1').innerHTML = 'Bấm <span class="kbd">' + (isAndroid ? '⋮' : '⋯') + '</span> ở góc trên bên phải';
+  $('step2').innerHTML = 'Chọn <strong>' + (isAndroid ? 'Mở trong Chrome' : 'Mở trong trình duyệt') + '</strong>';
+  $('arrowKey').textContent = isAndroid ? '⋮' : '⋯';
   var games = parseInt(store('nn-proto-games') || '0', 10) || 0;
   // Mỗi lần mở trong app: bảng nhắc hiện sau ván đầu. Đã bấm "Để sau" ở 2 lần mở trước thì chỉ còn nút vàng.
   var MAX_SHEET = 2;
@@ -238,7 +259,7 @@ h1{margin:0;font-size:34px;line-height:1.1;font-weight:800;letter-spacing:-.02em
     $('goalBar').style.width = Math.max(8, Math.min(100, 100*GOAL/sec)) + '%';
     show('sResult');
     // Mang kỷ lục theo URL: khi người chơi tự chọn "Mở trong trình duyệt", Safari nhận được
-    if (inApp) { try { history.replaceState(null, '', location.pathname + '?pb=' + pb); } catch(e){} }
+    if (inApp) { try { history.replaceState(null, '', withParams({ pb: pb, ac: q.get('ac') })); } catch(e){} }
     $('chip').hidden = !(inApp && dismissed);
     if (inApp && !dismissed) setTimeout(openSheet, 900);
   }
@@ -259,8 +280,8 @@ h1{margin:0;font-size:34px;line-height:1.1;font-weight:800;letter-spacing:-.02em
   };
   $('chip').onclick = openSheet;
   $('copy').onclick = function(){
-    var u = location.origin + location.pathname + '?pb=' + pb;
-    try { navigator.clipboard.writeText(u).then(function(){ toast('Đã chép link. Mở Safari và dán vào thanh địa chỉ.'); }, function(){ toast(u); }); }
+    var u = location.origin + withParams({ pb: pb });
+    try { navigator.clipboard.writeText(u).then(function(){ toast('Đã chép link. Mở ' + BR + ' và dán vào thanh địa chỉ.'); }, function(){ toast(u); }); }
     catch(e){ toast(u); }
   };
   $('go').onclick = start;
