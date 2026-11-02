@@ -168,14 +168,14 @@ h1{margin:0;font-size:34px;line-height:1.1;font-weight:800;letter-spacing:-.02em
   var pb = parseFloat(store('nn-proto-pb')) || null, carried = parseFloat(q.get('pb'));
   if (!inApp && carried && (!pb || carried < pb)) {
     pb = carried; store('nn-proto-pb', String(pb));
-    $('moved').textContent = '✓ Đã lưu kỷ lục ' + fmt(pb) + ' sang Safari. Mở lại tab này là chơi tiếp.';
+    $('moved').textContent = '✓ Đã lưu kỷ lục ' + fmt(pb*1000) + ' sang Safari. Mở lại tab này là chơi tiếp.';
     $('moved').hidden = false;
     history.replaceState(null, '', location.pathname);
   }
   var games = parseInt(store('nn-proto-games') || '0', 10) || 0;
   var dismissed = false;
   $('nq').textContent = N;
-  function showStart(){ $('pbStart').textContent = pb ? fmt(pb) : 'chưa có'; show('sStart'); }
+  function showStart(){ $('pbStart').textContent = pb ? fmt(pb*1000) : 'chưa có'; show('sStart'); }
   function show(id){ ['sStart','sGame','sResult'].forEach(function(s){ $(s).hidden = s !== id; }); }
 
   // ván chơi
